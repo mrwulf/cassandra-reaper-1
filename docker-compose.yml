@@ -1,6 +1,12 @@
 version: '2.2'
 
 services:
+  generate-ssl-stores:
+    build: ./docker/generate-ssl-stores
+    volumes:
+      - ./resource/generic_ca_cert.conf:/usr/src/app/generic_ca_cert.conf
+      - ./ssl-stores:/usr/src/app/ssl-stores
+
   cassandra:
     image: cassandra:3.11
     env_file:
@@ -18,6 +24,27 @@ services:
       - ./docker/cassandra/jmxremote.access:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/management/jmxremote.access
       - ./docker/cassandra/jmxremote.password:/etc/cassandra/jmxremote.password
 
+  cassandra-ssl:
+    image: cassandra-ssl
+    build:
+      context: ./docker/cassandra-ssl
+    env_file:
+          - docker/cassandra-ssl/cassandra.env
+    mem_limit: 4g
+    memswap_limit: 4g
+    mem_swappiness: 0
+    ports:
+      - "7000:7000"
+      - "7001:7001"
+      - "7199:7199"
+      - "9042:9042"
+    volumes:
+      - ./data/cassandra-ssl:/var/lib/cassandra
+      - ./docker/cassandra-ssl/jmxremote.access:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/management/jmxremote.access
+      - ./docker/cassandra-ssl/jmxremote.password:/etc/cassandra/jmxremote.password
+      - ./ssl-stores/node-server-keystore.jks:/etc/ssl/node-server-keystore.jks
+      - ./ssl-stores/generic-server-truststore.jks:/etc/ssl/generic-server-truststore.jks
+
   cqlsh:
     image: cassandra:3.11
     command: cqlsh cassandra
@@ -30,10 +57,25 @@ services:
     links:
       - cassandra
 
+  nodetool-ssl:
+    build: ./docker/nodetool-ssl
+    env_file:
+      - docker/nodetool-ssl/nodetool.env
+    links:
+      - cassandra-ssl
+    volumes:
+      - ./ssl-stores/node-server-keystore.jks:/etc/ssl/node-server-keystore.jks
+      - ./ssl-stores/generic-server-truststore.jks:/etc/ssl/generic-server-truststore.jks
+
   initialize-reaper_db:
     build: ./docker/initialize-reaper_db
     links:
       - cassandra
+
+  initialize-reaper_db-ssl:
+    build: ./docker/initialize-reaper_db-ssl
+    links:
+      - cassandra-ssl
 
   reaper:
     image: cassandra-reaper:latest
@@ -41,6 +83,19 @@ services:
       - docker/reaper/reaper.env
     links:
       - cassandra
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+
+  reaper-ssl:
+    image: cassandra-reaper:latest
+    env_file:
+      - docker/reaper-ssl/reaper-ssl.env
+    links:
+      - cassandra-ssl
+    volumes:
+      - ./ssl-stores/reaper-server-keystore.jks:/etc/ssl/reaper-server-keystore.jks
+      - ./ssl-stores/generic-server-truststore.jks:/etc/ssl/generic-server-truststore.jks
     ports:
       - "8080:8080"
       - "8081:8081"

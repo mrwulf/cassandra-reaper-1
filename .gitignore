@@ -27,3 +27,6 @@ reaper_ui/node_modules/
 
 # Docker Compose persistent storage directory
 data/
+
+# SSL stores directory
+ssl-stores/
