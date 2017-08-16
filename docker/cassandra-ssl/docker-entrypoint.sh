@@ -5,16 +5,6 @@
 
 set -e
 
-# TODO: Remove the SSH server restart once container is ready
-# modifications here:
-# Note that this is anti-pattern but we will need it so we can have SSH access to the node.
-# because this script will yield sudo and call itself, check for being root first
-if [ "$(id -u)" = '0' ]; then
-    service ssh restart
-fi
-# modifications end
-
-
 # first arg is `-f` or `--some-option`
 if [ "${1:0:1}" = '-' ]; then
     set -- cassandra -f "$@"

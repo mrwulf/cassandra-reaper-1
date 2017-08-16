@@ -281,19 +281,12 @@
                             <dockerDirectory>src/main/docker</dockerDirectory>
                             <buildArgs>
                                 <SHADED_JAR>cassandra-reaper-${project.version}.jar</SHADED_JAR>
-                                <KEY_STORE>${key.store}</KEY_STORE>
-                                <TRUST_STORE>${trust.store}</TRUST_STORE>
                             </buildArgs>
                             <resources>
                                 <resource>
                                     <targetPath>/</targetPath>
                                     <directory>${project.build.directory}</directory>
                                     <include>cassandra-reaper-${project.version}.jar</include>
-                                </resource>
-                                <resource>
-                                    <targetPath>/ssl-stores</targetPath>
-                                    <directory>ssl-stores</directory>
-                                    <include>**/*.jks</include>
                                 </resource>
                             </resources>
                         </configuration>

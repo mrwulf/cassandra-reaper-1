@@ -5,19 +5,6 @@ WORKDIR ${WORKDIR}
 ARG KEY_STORE_PWD
 ARG TRUST_STORE_PWD
 
-
-# TODO: Remove this SSH installation once container is ready
-# setup SSH
-RUN set -x \
-    && apt-get update \
-    && apt-get -y install openssh-server vim \
-    && mkdir -p ${WORKDIR}/.ssh \
-    && chmod -R 700 ${WORKDIR}/.ssh
-
-COPY authorized_keys ${WORKDIR}/.ssh/authorized_keys
-RUN chmod 600 ${WORKDIR}/.ssh/authorized_keys
-
-
 # Set password for SSL stores used when calling nodetool
 COPY nodetool-ssl.properties ${WORKDIR}/.cassandra/nodetool-ssl.properties
 RUN sed -ie "s/KEYSTORE_PASSWORD/${KEY_STORE_PWD}/g" ${WORKDIR}/.cassandra/nodetool-ssl.properties \
@@ -38,11 +25,10 @@ RUN sed -ie 's/#JVM_OPTS="$JVM_OPTS -Dcom.sun.management.jmxremote.ssl=true"/JVM
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
-# 22:   SSH
 # 7000: intra-node communication
 # 7001: TLS intra-node communication
 # 7199: JMX
 # 9042: CQL
 # 9160: thrift service
-EXPOSE 22 7000 7001 7199 9042 9160
+EXPOSE 7000 7001 7199 9042 9160
 CMD ["cassandra", "-f"]

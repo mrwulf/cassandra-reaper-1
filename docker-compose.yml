@@ -37,7 +37,6 @@ services:
     memswap_limit: 4g
     mem_swappiness: 0
     ports:
-      - "222:22"
       - "7000:7000"
       - "7001:7001"
       - "7199:7199"
@@ -96,6 +95,9 @@ services:
       - docker/reaper-ssl/reaper-ssl.env
     links:
       - cassandra-ssl
+    volumes:
+      - ./ssl-stores/reaper-server-keystore.jks:/etc/ssl/reaper-server-keystore.jks
+      - ./ssl-stores/generic-server-truststore.jks:/etc/ssl/generic-server-truststore.jks
     ports:
       - "8080:8080"
       - "8081:8081"

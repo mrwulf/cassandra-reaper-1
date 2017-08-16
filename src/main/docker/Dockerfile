@@ -1,8 +1,6 @@
 FROM openjdk:8-jre-alpine
 
 ARG SHADED_JAR
-ARG KEY_STORE
-ARG TRUST_STORE
 
 ENV REAPER_SEGMENT_COUNT=200 \
     REAPER_REPAIR_PARALELLISM=DATACENTER_AWARE \
@@ -51,15 +49,11 @@ RUN addgroup -S reaper && \
     apk add --no-cache 'su-exec>=0.2' && \
     mkdir -p /var/lib/cassandra-reaper && \
     chown reaper:reaper /etc/cassandra-reaper.yml /var/lib/cassandra-reaper /usr/local/bin/entrypoint.sh /usr/local/bin/append-persistence.sh && \
-    chmod u+x /usr/local/bin/entrypoint.sh /usr/local/bin/append-persistence.sh && \
-    mkdir -p /etc/ssl
+    chmod u+x /usr/local/bin/entrypoint.sh /usr/local/bin/append-persistence.sh
 
 VOLUME /var/lib/cassandra-reaper
-VOLUME /etc/ssl
 
 ADD ${SHADED_JAR} /usr/local/lib/cassandra-reaper.jar
-ADD ${KEY_STORE} /etc/ssl/key-store.jks
-ADD ${TRUST_STORE} /etc/ssl/trust-store.jks
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["cassandra-reaper"]
