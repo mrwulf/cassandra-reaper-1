@@ -28,9 +28,6 @@ services:
     image: cassandra-ssl
     build:
       context: ./docker/cassandra-ssl
-      args:
-        KEY_STORE_PWD: "keypassword"
-        TRUST_STORE_PWD: "trustpassword"
     env_file:
           - docker/cassandra-ssl/cassandra.env
     mem_limit: 4g
@@ -61,13 +58,14 @@ services:
       - cassandra
 
   nodetool-ssl:
-      image: cassandra-ssl
-      entrypoint: nodetool --host cassandra-ssl --username cassandraUser --password cassandraPass --ssl
-      links:
-        - cassandra-ssl
-      volumes:
-        - ./ssl-stores/node-server-keystore.jks:/etc/ssl/node-server-keystore.jks
-        - ./ssl-stores/generic-server-truststore.jks:/etc/ssl/generic-server-truststore.jks
+    build: ./docker/nodetool-ssl
+    env_file:
+      - docker/nodetool-ssl/nodetool.env
+    links:
+      - cassandra-ssl
+    volumes:
+      - ./ssl-stores/node-server-keystore.jks:/etc/ssl/node-server-keystore.jks
+      - ./ssl-stores/generic-server-truststore.jks:/etc/ssl/generic-server-truststore.jks
 
   initialize-reaper_db:
     build: ./docker/initialize-reaper_db
