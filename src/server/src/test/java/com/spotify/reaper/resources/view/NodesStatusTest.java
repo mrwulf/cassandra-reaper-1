@@ -84,13 +84,17 @@ public class NodesStatusTest {
     assertEquals(nodesStatus.endpointStates.get(0).endpoints.get("datacenter1").get("rack1").get(0).endpoint, "127.0.0.1");
     assertEquals(nodesStatus.endpointStates.get(0).endpoints.get("datacenter1").get("rack1").get(0).hostId, "f091f82b-ce2c-40ee-b30c-6e761e94e821");
     assertEquals(nodesStatus.endpointStates.get(0).endpoints.get("datacenter1").get("rack1").get(0).tokens, "13");
-    assertTrue(nodesStatus.endpointStates.get(0).endpoints.get("datacenter1").get("rack1").get(0).severity.equals((double)0.0));
+    assertTrue(nodesStatus.endpointStates.get(0).endpoints.get("datacenter1").get("rack1").get(0).severity.equals(0.0));
     assertEquals(nodesStatus.endpointStates.get(0).endpoints.get("datacenter1").get("rack1").get(0).releaseVersion, "3.0.8");
     assertEquals(nodesStatus.endpointStates.get(0).endpoints.get("datacenter2").get("rack2").get(0).dc, "datacenter2");
     assertEquals(nodesStatus.endpointStates.get(0).endpoints.get("datacenter2").get("rack2").get(0).rack, "rack2");
     assertEquals(nodesStatus.endpointStates.get(0).endpoints.get("us-west-1").get("rack3").get(0).dc, "us-west-1");
     assertEquals(nodesStatus.endpointStates.get(0).endpoints.get("us-west-1").get("rack3").get(0).rack, "rack3");
     assertTrue(nodesStatus.endpointStates.get(0).endpoints.get("us-west-1").get("rack3").get(0).load.equals(3974144.0));
+
+    assertTrue(nodesStatus.endpointStates.get(0).endpointNames.contains("127.0.0.1"));
+    assertTrue(nodesStatus.endpointStates.get(0).endpointNames.contains("127.0.0.2"));
+    assertTrue(nodesStatus.endpointStates.get(0).endpointNames.contains("127.0.0.3"));
   }
 
 }
