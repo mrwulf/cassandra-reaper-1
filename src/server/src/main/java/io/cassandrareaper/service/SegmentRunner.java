@@ -129,8 +129,6 @@ public final class SegmentRunner implements RepairStatusHandler, Runnable {
 
   @Override
   public void run() {
-    final RepairSegment segment = context.storage.getRepairSegment(repairRunner.getRepairRunId(), segmentId).get();
-    Thread.currentThread().setName(clusterName + ":" + segment.getRunId() + ":" + segmentId);
     if (takeLead()) {
       try {
         if (runRepair()) {
@@ -147,7 +145,7 @@ public final class SegmentRunner implements RepairStatusHandler, Runnable {
     }
   }
 
-  public static void postpone(AppContext context, RepairSegment segment, Optional<RepairUnit> repairUnit) {
+  private static void postpone(AppContext context, RepairSegment segment, Optional<RepairUnit> repairUnit) {
     LOG.info("Postponing segment {}", segment.getId());
     try {
       context.storage.updateRepairSegment(
@@ -158,7 +156,6 @@ public final class SegmentRunner implements RepairStatusHandler, Runnable {
                   repairUnit.isPresent() && repairUnit.get().getIncrementalRepair()
                   ? segment.getCoordinatorHost()
                   : null) // set coordinator host to null only for full repairs
-              .repairCommandId(null)
               .startTime(null)
               .failCount(segment.getFailCount() + 1)
               .build(segment.getId()));
@@ -211,6 +208,7 @@ public final class SegmentRunner implements RepairStatusHandler, Runnable {
   private boolean runRepair() {
     LOG.debug("Run repair for segment #{}", segmentId);
     final RepairSegment segment = context.storage.getRepairSegment(repairRunner.getRepairRunId(), segmentId).get();
+    Thread.currentThread().setName(clusterName + ":" + segment.getRunId() + ":" + segmentId);
 
     try (Timer.Context cxt = context.metricRegistry.timer(metricNameForRunRepair(segment)).time();
         JmxProxy coordinator = context.jmxConnectionFactory.connectAny(
@@ -292,8 +290,7 @@ public final class SegmentRunner implements RepairStatusHandler, Runnable {
           }
 
           long timeout = repairUnit.getIncrementalRepair() ? timeoutMillis * MAX_TIMEOUT_EXTENSIONS : timeoutMillis;
-          context.storage.updateRepairSegment(
-              segment.with().coordinatorHost(coordinator.getHost()).repairCommandId(commandId).build(segmentId));
+          context.storage.updateRepairSegment(segment.with().coordinatorHost(coordinator.getHost()).build(segmentId));
           String eventMsg
               = String.format("Triggered repair of segment %s via host %s", segment.getId(), coordinator.getHost());
 
@@ -533,7 +530,7 @@ public final class SegmentRunner implements RepairStatusHandler, Runnable {
           = context.jmxConnectionFactory.connect(hostName, context.config.getJmxConnectionTimeoutInSeconds())) {
         hostProxy.cancelAllRepairs();
         hostProxy.close();
-      } catch (ReaperException | RuntimeException e) {
+      } catch (ReaperException | RuntimeException | InterruptedException e) {
         LOG.debug("failed to cancel repairs on host {}", hostName, e);
       }
     }
@@ -590,7 +587,7 @@ public final class SegmentRunner implements RepairStatusHandler, Runnable {
         if (hostProxy.isRepairRunning()) {
           return true;
         }
-      } catch (ReaperException | JMException e) {
+      } catch (ReaperException | JMException | NumberFormatException | InterruptedException e) {
         LOG.error(
             "Unreachable node when trying to determine if repair is running on a node."
                 + " Crossing fingers and continuing...",
@@ -843,7 +840,7 @@ public final class SegmentRunner implements RepairStatusHandler, Runnable {
           // there is no way of telling if the snapshot was cleared or not :(
           jmx.clearSnapshot(repairId, keyspace);
           jmx.close();
-        } catch (ReaperException e) {
+        } catch (ReaperException | NumberFormatException | InterruptedException e) {
           LOG.warn(
               "Failed to clear snapshot after failed session for host {}, keyspace {}: {}",
               involvedNode,
